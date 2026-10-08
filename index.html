@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English-Tausug Translator</title>
+    <title>Tausugo</title>
     <link rel="stylesheet" href="Styles_TTS.css">
 </head>
 <body>
     <div class="container">
-        <h1>English-Tausug Translator</h1>
-        <p>Enter text below, select the translation direction, and click "Translate" to convert using a word bank.</p>
+        <h1>TAUSUGO</h1>
+        <p>Enter text below, select the translation direction, and click "Translate" to convert using phrases first, then the word bank.</p>
         
         <select id="direction">
             <option value="en-to-tausug">English to Tausug</option>
@@ -17,6 +17,11 @@
         </select>
         
         <textarea id="inputText" placeholder="Type text here..."></textarea>
+
+        <div class="stt-controls">
+            <button id="sttButton" type="button" onclick="toggleLocalSTT()">🎤 Start Local STT</button>
+            <span id="sttStatus" aria-live="polite">STT model loading...</span>
+        </div>
         
         <button onclick="translateText()">Translate</button>
         
@@ -27,69 +32,433 @@
 
     <script src="script.js"></script>
     <script>
-        // Tausug word banks
+        // English to Tausug word bank
         const wordBankEnToTausug = {
-            "hello": "assalamu alaykum",
-            "hi": "kumusta",
-            "world": "kalibutan",
-            "the": "in",
-            "and": "iban",
-            "is": "hiya",
-            "a": "usa",
-            "good": "maayo",
-            "day": "adlaw",
-            "how": "kumusta",
-            "are": "ka",
-            "you": "ikaw",
-            "thank": "magsukul",
-            "thanks": "magsukul",
-            "please": "tabi",
-            "yes": "oo",
-            "no": "dili",
+            "where is":"tungud",
+            "morning": "mahinaat",
+            "afternoon": "mahapun",
+            "night": "dūm",
+            "today": "adlaw ini",
+            "tomorrow": "kunsūm",
+            "yesterday": "kahapun",
+            "man": "usug",
+            "woman": "babai",
+            "boy": "bata’ usug",
+            "girl": "bata’ babai",
+            "brother": "taymanghud usug",
+            "sister": "taymanghud babai",
+            "grandmother": "apu’",
+            "grandfather": "apu’",
+            "husband": "bana",
+            "wife": "asawa",
+            "friend": "bagay",
+            "teacher": "guru",
+            "student": "murid",
+            "school": "iskul",
+            "book": "būk",
+            "pen": "pluma",
+            "table": "lamisahan",
+            "chair": "bangku’",
+            "door": "lawang",
+            "window": "tandawan",
+            "clothes": "badju’",
+            "shoes": "tawmpa’",
+            "money": "sīn",
+            "market": "tabu’",
+            "store": "tinda",
+            "road": "dān",
+            "sea": "dagat",
+            "mountain": "būd",
+            "sun": "suga",
+            "moon": "bulan",
+            "star": "bittuun",
+            "rain": "ulan",
+            "wind": "hangin",
+            "fire": "kāyu",
+            "earth": "lupa’",
+            "sky": "langit",
+            "tree": "kahuy",
+            "flower": "bulak",
+            "bird": "manuk-manuk",
+            "chicken": "manuk",
+            "horse": "kura’",
+            "carabao": "karbaw",
+            "eat": "kaun",
+            "drink": "inum",
+            "walk": "panaw",
+            "run": "dāgan",
+            "come": "kari",
+            "go": "kadtu",
+            "give": "dihil",
+            "take": "kawa’",
+            "see": "kita’",
+            "hear": "dungug",
+            "speak": "bissara",
+            "read": "bassa",
+            "write": "sulat",
+            "work": "hinang",
+            "play": "panayam",
+            "laugh": "katawa",
+            "cry": "tangis",
+            "smile": "ngisi",
+            "help": "tabang",
+            "wait": "tagad",
+            "open": "ukab",
+            "close": "tambul",
+            "buy": "bī",
+            "sell": "dagang",
+            "beautiful": "malingkat",
+            "happy": "malipayon",
+            "strong": "makusug",
+            "fast": "marāgan",
+            "slow": "malallay",
+            "new": "ba’gu",
+            "old": "maas",
+            "clean": "malanu’",
+            "dirty": "mahugaw",
+            "easy": "masulut",
+            "difficult": "maunit"
         };
 
+        // Tausug to English word bank
         const wordBankTausugToEn = {
-            "assalamu alaykum": "hello",
-            "kumusta": "hello/how",
-            "kalibutan": "world",
-            "in": "the",
-            "iban": "and",
-            "hiya": "is",
-            "usa": "a",
-            "maayo": "good",
-            "adlaw": "day",
-            "ka": "are",
-            "ikaw": "you",
-            "magsukul": "thank/thanks",
-            "tabi": "please",
-            "oo": "yes",
-            "dili": "no",
+            "tungud":"where is",
+            "mahinaat": "morning",
+            "mahapun": "afternoon",
+            "dūm": "night",
+            "adlaw ini": "today",
+            "kunsūm": "tomorrow",
+            "kahapun": "yesterday",
+            "usug": "man",
+            "babai": "woman",
+            "bata’ usug": "boy",
+            "bata’ babai": "girl",
+            "taymanghud usug": "brother",
+            "taymanghud babai": "sister",
+            "apu’": "grandmother/grandfather",
+            "bana": "husband",
+            "asawa": "wife",
+            "bagay": "friend",
+            "guru": "teacher",
+            "murid": "student",
+            "iskul": "school",
+            "būk": "book",
+            "pluma": "pen",
+            "lamisahan": "table",
+            "bangku’": "chair",
+            "lawang": "door",
+            "tandawan": "window",
+            "badju’": "clothes",
+            "tawmpa’": "shoes",
+            "sīn": "money",
+            "tabu’": "market",
+            "tinda": "store",
+            "dān": "road",
+            "dagat": "sea",
+            "būd": "mountain",
+            "suga": "sun",
+            "bulan": "moon",
+            "bituun": "star",
+            "ulan": "rain",
+            "hangin": "wind",
+            "kāyu": "fire",
+            "lupa’": "earth",
+            "langit": "sky",
+            "kahuy": "tree",
+            "bulak": "flower",
+            "manuk-manuk": "bird",
+            "manuk": "chicken",
+            "kura’": "horse",
+            "karbaw": "carabao",
+            "kaun": "eat",
+            "inum": "drink",
+            "panaw": "walk",
+            "dāgan": "run",
+            "kari": "come",
+            "kadtu": "go",
+            "dihil": "give",
+            "kawa’": "take",
+            "kita’": "see",
+            "dungug": "hear",
+            "bissara": "speak",
+            "bassa": "read",
+            "sulat": "write",
+            "hinang": "work",
+            "panayam": "play",
+            "katawa": "laugh",
+            "tangis": "cry",
+            "ngisi": "smile",
+            "tabang": "help",
+            "tagad": "wait",
+            "ukab": "open",
+            "tambul": "close",
+            "bī": "buy",
+            "dagang": "sell",
+            "malingkat": "beautiful",
+            "malipayon": "happy",
+            "makusug": "strong",
+            "marāgan": "fast",
+            "malallay": "slow",
+            "ba’gu": "new",
+            "maas": "old",
+            "malanu’": "clean",
+            "mahugaw": "dirty",
+            "masulut": "easy",
+            "maunit": "difficult"
         };
 
-        /*
-         * Custom Tausug pronunciation dictionary.
-         *
-         * IMPORTANT:
-         * These are pronunciation hints, not a claim that browser TTS
-         * understands Tausug phonetics. We can expand/correct this list
-         * as you provide pronunciations from real Tausug speakers.
-         */
-        const tausugPronunciation = {
+        // =========================================================
+        // PHRASE BANKS
+        // =========================================================
+
+        const phraseBankEnToTausug = {
+            "where is the": "hawnu in",
+            "where am I": "hawnu na aku",
+            "Where is":"hawnu nahi",
+            "where are you":"hawnu nakam yan",
+            "where will it happen": "hawnu yattu mangyari",
+            "what is that":"unu yan",
+            "what is this": "unu ini",
+            "how are you": "biyariin da kaw",
+            "who are you": "hisiyu kaw",
+            "who is that": "hisiyu yan",
+            "what time": "isag pila",
+            "what time is it": "isag pila na",
+            "where is it": "hawnu yattu",
+            "where are you from": "Taga hawnu kaw",
+            "where are you going": "pakain kaw",
+            "why": "mayta",
+            "where is the bathroom": "Hawnu in kasilyas",
+            "how much is this": "pilasin ini",
+            "what is your name": "isiyu in ngan mu",
+            "can you help me": "tabangi ba aku",
+            "i dont understand": "di ku kahatihan",
+            "please repeat": "baliki kunuh",
+            "speak slowly please": "pagbissara kaw agak agak",
+            "youre welcome": "magsukul da isab",
+            "im sorry": "maafa aku",
+            "where is the hotel": "hawnu in hotel",
+            "where is the market": "hawnu in tabuh",
+            "how do i get there": "biyariin aku makakattu",
+            "is it far": "malayu ba",
+            "is it near": "masuuk ba",
+            "what should i do": "unu in hinangun ku",
+            "can i ask something": "manjari ba mangasubu",
+            "do you speak english": "nagbibissara ba kaw encglish",
+            "i need help": "tabang",
+            "i am lost": "na lawa na aku",
+            "where can i buy this": "hawnu ku ini mabih",
+            "what does this mean": "unu in panghati niya",
+            "what time does it open": "isag pila siya mag-ukab",
+            "Is there a discount": "awun ba diskawnt duun",
+            //ADITIONAL
+            "i will punch you": "bag bagun takaw",
+            
+
+        };
+
+        const phraseBankTausugToEn = {
+            "magandang umaga": "good morning",
+            "hawnu in": "where is the",
+            "hawnu na aku": "Where am i",
+            "hawnu hi": "where is",
+            "hawnu nakaw yan": "where are you",
+            "hawnu yattu mangyari": "Where will it happen",
+            "unu yan": "what is that",
+            "unu ini": "what is this",
+            "Biyariin da kaw": "How are you",
+            "Hisiyu kaw": "Who are you",
+            "hisiyu yan": "who is that",
+            "mayta": "why",
+            "isag pila na": "what time is it?",
+            "isag pila": "What time",
+            "hawnu yattu": "Where is it?",
+            "pakain kaw": "where are you going",
+            "hawnu in kasilyas?": "where is the bathroom",
+            "pilasin ini": "how much is this",
+            "isyu in ngan mu": "Wht is your name",
+            "taga hawnu kaw": "where aree you from",
+            "tabangi ba aku": "can you help me",
+            "di ku kahatihan": "i dont understand",
+            "baliki kunuh": "please repeat",
+            "pagbissara kaw agak agak": "speak slowly please",
+            "magsukul": "thank you",
+            "magsukul da isab": "youre welcome",
+            "tabiyah": "excuse me",
+            "maafa aku": "im sorry",
+            "hawnu in hotel": "where is the hotel",
+            "hawnu in tabuh": "where is the market",
+            "biyariin aku makakattu": "how do i get there",
+            "malayu ba":"is it far",
+            "masuuk ba": "is it near",
+            "unu in hinangun ku": "what should i do",
+            "manjari ba mangasubu": "can i ask something",
+            "nagbibissara ka english": "do you speak english",
+            "nalawa na aku": "i am lost",
+            "hawnu ini mabih": "where can i buy this",
+            "unu un panghati niya": "what does this mean",
+            "isag pila siya mag-ukab": "what time does it open"
+        };
+
+        // Escape special characters before making a phrase regex.
+        function escapeRegex(text) {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Replace phrases first, then individual words.
+        // The longest phrases are checked first so a shorter entry
+        // cannot accidentally replace part of a longer phrase.
+        function translateWithPhrases(input, phraseBank, wordBank) {
+            let output = input;
+
+            const phraseEntries = Object.entries(phraseBank)
+                .sort((a, b) => b[0].length - a[0].length);
+
+            for (const [source, target] of phraseEntries) {
+                const escaped = escapeRegex(source);
+
+                output = output.replace(
+                    new RegExp('(^|\\s)' + escaped + '(?=\\s|[.!?,;:]|$)', 'gi'),
+                    '$1' + target
+                );
+            }
+
+            // Translate remaining individual words/entries.
+            const wordEntries = Object.entries(wordBank)
+                .sort((a, b) => b[0].length - a[0].length);
+
+            for (const [source, target] of wordEntries) {
+                const escaped = escapeRegex(source);
+
+                output = output.replace(
+                    new RegExp('(^|\\s)' + escaped + '(?=\\s|[.!?,;:]|$)', 'gi'),
+                    '$1' + target
+                );
+            }
+
+            return output;
+        }
+
+        // Custom TTS pronunciation
+        const tausugpronunciation = {
             "assalamu alaykum": "assa-la-moo, ah-lay-koom",
-            "kumusta": "ka-moos-ta",
-            "kalibutan": "ka-li-boo-tan",
+            "biyariin": "be-ya-riin",
+            "dunya": "doon-YAH",
             "in": "in",
             "iban": "e-ban",
             "hiya": "he-ya",
-            "usa": "oo-sa",
-            "maayo": "ma-ah-yo",
+            "hambuuk": "humbu-UK",
+            "marayaw": "ma-ra-YAW",
             "adlaw": "ad-lau",
             "ka": "ka",
             "ikaw": "e-kau",
             "magsukul": "mag-soo-kul",
             "tabi": "ta-be",
             "oo": "ohh-ohh",
-            "dili": "di-li"
+            "di": "de",
+            "bay": "bai",
+            "mahinaat": "ma-hee-naat",
+            "mahapun": "ma-ha-pun",
+            "dūm": "doom",
+            "adlaw ini": "ad-lau ee-nee",
+            "kunsūm": "koon-soom",
+            "kahapun": "ka-ha-pun",
+            "usug": "oo-soog",
+            "babai": "ba-bai",
+            "bata’ usug": "ba-ta oo-soog",
+            "bata’ babai": "ba-ta ba-bai",
+            "taymanghud usug": "tai-mang-hood oo-soog",
+            "taymanghud babai": "tai-mang-hood ba-bai",
+            "apu’": "a-poo",
+            "bana": "ba-na",
+            "asawa": "a-sa-wa",
+            "bagay": "ba-gai",
+            "guru": "goo-roo",
+            "murid": "moo-rid",
+            "iskul": "is-kool",
+            "būk": "book",
+            "pluma": "ploo-ma",
+            "lamisahan": "la-mi-sa-han",
+            "bangku’": "bang-koo",
+            "lawang": "la-wang",
+            "tandawan": "tan-da-wan",
+            "badju’": "bad-joo",
+            "tawmpa’": "tawm-pa",
+            "sīn": "seen",
+            "tabu’": "ta-boo",
+            "tinda": "tin-da",
+            "dān": "daan",
+            "dagat": "da-gat",
+            "būd": "bood",
+            "suga": "soo-ga",
+            "bulan": "boo-lan",
+            "bituun": "bi-toon",
+            "ulan": "oo-lan",
+            "hangin": "ha-ngin",
+            "kāyu": "ka-yoo",
+            "lupa’": "loo-pa",
+            "langit": "la-ngit",
+            "kahuy": "ka-hooy",
+            "bulak": "boo-lak",
+            "manuk-manuk": "ma-nook ma-nook",
+            "manuk": "ma-nook",
+            "kura’": "koo-ra",
+            "karbaw": "kar-bau",
+            "kaun": "ka-oon",
+            "inum": "ee-noom",
+            "panaw": "pa-naw",
+            "dāgan": "da-gan",
+            "kari": "ka-ree",
+            "kadtu": "kad-too",
+            "dihil": "dee-hil",
+            "kawa’": "ka-wa",
+            "kita’": "ki-ta",
+            "dungug": "doo-noog",
+            "bissara": "bis-sa-ra",
+            "bassa": "bas-sa",
+            "sulat": "soo-lat",
+            "hinang": "hee-nang",
+            "panayam": "pa-na-yam",
+            "katawa": "ka-ta-wa",
+            "tangis": "ta-ngis",
+            "ngisi": "ngi-see",
+            "tabang": "ta-bang",
+            "tagad": "ta-gad",
+            "ukab": "oo-kab",
+            "tambul": "tam-bool",
+            "bī": "bee",
+            "dagang": "da-gang",
+            "malingkat": "ma-ling-kat",
+            "malipayon": "ma-li-pa-yon",
+            "makusug": "ma-koo-soog",
+            "marāgan": "ma-ra-gan",
+            "malallay": "ma-la-lai",
+            "ba’gu": "ba-goo",
+            "maas": "ma-as",
+            "malanu’": "ma-la-noo",
+            "mahugaw": "ma-hoo-gaw",
+            "masulut": "ma-soo-loot",
+            "maunit": "ma-oo-nit"
+        };
+
+        const tausugPronunciation = {
+            "assalamu alaykum": "assa-la-moo, ah-lay-koom",
+            "biyariin": "be-ya-riin",
+            "dunya": "doon-YAH",
+            "in": "in",
+            "iban": "e-ban",
+            "hiya": "he-ya",
+            "hambuuk": "humbu-UK",
+            "marayaw": "ma-ra-YAW",
+            "adlaw": "ad-lau",
+            "ka": "ka",
+            "ikaw": "e-kau",
+            "magsukul": "mag-soo-kul",
+            "tabi": "ta-be",
+            "oo": "ohh-ohh",
+            "di": "de",
+            "dum": "doom",
+            "bay": "bai"
         };
 
         // Apply dictionary pronunciations to a Tausug sentence.
@@ -105,6 +474,7 @@
                     new RegExp('(^|\\s)' + escaped + '(?=\\s|$)', 'gi'),
                     '$1' + pronunciation
                 );
+
             }
 
             return spoken;
@@ -138,8 +508,6 @@
 
             const speech = new SpeechSynthesisUtterance(speechText);
 
-            // There is no guaranteed native Tausug browser voice.
-            // For now we use an English voice with pronunciation hints.
             speech.lang = isTausug ? 'en-US' : 'en-US';
             speech.rate = isTausug ? 0.82 : 0.9;
             speech.pitch = 1;
@@ -161,33 +529,29 @@
         }
 
         function translateText() {
-            const input = document.getElementById('inputText').value.toLowerCase().trim();
+            const input = document.getElementById('inputText').value.trim();
             const direction = document.getElementById('direction').value;
+
             const wordBank = direction === 'en-to-tausug'
                 ? wordBankEnToTausug
                 : wordBankTausugToEn;
 
-            // Match the longest phrases first.
-            const sortedEntries = Object.entries(wordBank)
-                .sort((a, b) => b[0].length - a[0].length);
+            const phraseBank = direction === 'en-to-tausug'
+                ? phraseBankEnToTausug
+                : phraseBankTausugToEn;
 
-            let output = input;
-
-            for (const [source, target] of sortedEntries) {
-                const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                output = output.replace(
-                    new RegExp('(^|\\s)' + escaped + '(?=\\s|$)', 'gi'),
-                    '$1' + target
-                );
-            }
+            // Phrases are checked first. If no phrase matches,
+            // the normal word bank is used for the remaining text.
+            const output = translateWithPhrases(
+                input,
+                phraseBank,
+                wordBank
+            );
 
             document.getElementById('output').innerHTML =
                 `<strong>Translated:</strong> ${output || '(no text entered)'}`;
 
-            if (output) {
-                speakText(output, direction);
-            }
-
+            // TTS remains manual: Translate does NOT automatically speak.
             document.getElementById('speakButton').disabled = !output;
         }
 
@@ -219,5 +583,218 @@
             };
         }
     </script>
+
+    <!-- Local browser STT: Transformers.js + multilingual Whisper.
+         Inference runs in the browser after the model is downloaded/cached. -->
+    <script type="module">
+        import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0";
+
+        let localTranscriber = null;
+        let sttLoading = false;
+        let sttRecording = false;
+        let mediaRecorder = null;
+        let mediaStream = null;
+        let recordedChunks = [];
+
+        const STT_MODEL = "Xenova/whisper-tiny";
+
+        function setSTTStatus(message) {
+            const status = document.getElementById("sttStatus");
+            if (status) status.textContent = message;
+        }
+
+        function setSTTButton(text, disabled = false) {
+            const button = document.getElementById("sttButton");
+            if (button) {
+                button.textContent = text;
+                button.disabled = disabled;
+            }
+        }
+
+        async function loadLocalSTT() {
+            if (localTranscriber) return localTranscriber;
+            if (sttLoading) return null;
+
+            sttLoading = true;
+            setSTTButton("⏳ Loading STT...", true);
+            setSTTStatus("Downloading/loading local Whisper model...");
+
+            try {
+                localTranscriber = await pipeline(
+                    "automatic-speech-recognition",
+                    STT_MODEL
+                );
+
+                setSTTStatus("STT ready — speech is processed in your browser.");
+                setSTTButton("🎤 Start Local STT");
+                return localTranscriber;
+            } catch (error) {
+                console.error("STT model error:", error);
+                setSTTStatus("Could not load STT model.");
+                setSTTButton("🎤 Start Local STT");
+                alert(
+                    "The local STT model could not be loaded. " +
+                    "Check your internet connection and browser console."
+                );
+                return null;
+            } finally {
+                sttLoading = false;
+            }
+        }
+
+        async function toggleLocalSTT() {
+            if (sttRecording) {
+                stopLocalSTT();
+            } else {
+                await startLocalSTT();
+            }
+        }
+
+        async function startLocalSTT() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert(
+                    "Microphone access is unavailable here. " +
+                    "Use Chrome/Edge and open the page from localhost or HTTPS."
+                );
+                return;
+            }
+
+            const transcriber = await loadLocalSTT();
+            if (!transcriber) return;
+
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(mediaStream);
+
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data && event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    let audioContext = null;
+
+                    try {
+                        setSTTButton("⏳ Transcribing...", true);
+                        setSTTStatus("Converting recording and transcribing locally...");
+
+                        const blob = new Blob(recordedChunks, {
+                            type: mediaRecorder.mimeType || "audio/webm"
+                        });
+
+                        const arrayBuffer = await blob.arrayBuffer();
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        audioContext = new AudioCtx();
+
+                        const decoded = await audioContext.decodeAudioData(arrayBuffer);
+
+                        // Whisper expects 16 kHz mono audio.
+                        let audioData;
+
+                        if (decoded.sampleRate === 16000 && decoded.numberOfChannels === 1) {
+                            audioData = decoded.getChannelData(0);
+                        } else {
+                            const targetLength = Math.ceil(decoded.duration * 16000);
+                            const offlineContext = new OfflineAudioContext(
+                                1,
+                                targetLength,
+                                16000
+                            );
+
+                            const source = offlineContext.createBufferSource();
+                            source.buffer = decoded;
+                            source.connect(offlineContext.destination);
+                            source.start(0);
+
+                            const rendered = await offlineContext.startRendering();
+                            audioData = rendered.getChannelData(0);
+                        }
+
+                        const direction = document.getElementById("direction").value;
+                        const options = {
+                            chunk_length_s: 30,
+                            stride_length_s: 5
+                        };
+
+                        // Whisper has no dedicated Tausug language code.
+                        // For English input we can explicitly guide it to English.
+                        if (direction === "en-to-tausug") {
+                            options.language = "english";
+                            options.task = "transcribe";
+                        }
+
+                        const result = await transcriber(audioData, options);
+                        const text = (result.text || "").trim();
+
+                        if (text) {
+                            const input = document.getElementById("inputText");
+                            input.value = text;
+                            input.focus();
+                            setSTTStatus("Done. Edit the text or click Translate.");
+                        } else {
+                            setSTTStatus("No speech recognized. Try again.");
+                        }
+                    } catch (error) {
+                        console.error("Local STT transcription error:", error);
+                        setSTTStatus("STT transcription failed.");
+                        alert(
+                            "I couldn't transcribe that recording. " +
+                            "Try a shorter recording and check your microphone."
+                        );
+                    } finally {
+                        if (audioContext) {
+                            try { await audioContext.close(); } catch (_) {}
+                        }
+                        setSTTButton("🎤 Start Local STT");
+                    }
+                };
+
+                mediaRecorder.start();
+                sttRecording = true;
+                setSTTButton("⏹ Stop & Transcribe");
+                setSTTStatus("Listening... speak now.");
+
+            } catch (error) {
+                console.error("Microphone error:", error);
+                setSTTStatus("Microphone access was not granted.");
+                setSTTButton("🎤 Start Local STT");
+                alert(
+                    "Microphone access was not granted. " +
+                    "Allow microphone permission and try again."
+                );
+            }
+        }
+
+        function stopLocalSTT() {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") return;
+
+            sttRecording = false;
+            setSTTStatus("Stopping recording...");
+            mediaRecorder.stop();
+
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+        }
+
+        window.toggleLocalSTT = toggleLocalSTT;
+        window.startLocalSTT = startLocalSTT;
+        window.stopLocalSTT = stopLocalSTT;
+
+        // Start loading the model as the page opens.
+        loadLocalSTT();
+    </script>
+
 </body>
 </html>
